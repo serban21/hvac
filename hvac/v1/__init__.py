@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 import json
 import base64
 
+import sys
+
 try:
     from urllib.parse import urlparse
 except ImportError:
@@ -1032,6 +1034,15 @@ class Client(object):
         body = response.json()
         return body['auth']['client_token']
 
+    @staticmethod
+    def _base64encode(data):
+        if sys.version_info[0] >= 3:
+            if isinstance(data, str):
+                data = bytes(data, ascii)
+            return str(base64.b64encode(data.encode('ascii')), 'ascii')
+        else:
+            return base64.b64encode(data)
+
     def _generate_vault_request(self, role, vault_host):
         """
         Generate a signed sts:GetCallerIdentity request to validate identify of the client.
@@ -1050,11 +1061,9 @@ class Client(object):
 
         return {
             'iam_http_request_method': request.method,
-            'iam_request_url': str(base64.b64encode(request.url.encode('ascii')), 'ascii'),
-            'iam_request_body': str(base64.b64encode(request.body.encode('ascii')), 'ascii'),
-            'iam_request_headers': str(
-                base64.b64encode(bytes(json.dumps(self._prep_for_serialization(dict(request.headers))), 'ascii')),
-                'ascii'),
+            'iam_request_url': self._base64encode(request.url),
+            'iam_request_body': self._base64encode(request.body),
+            'iam_request_headers': self._base64encode(json.dumps(self._prep_for_serialization(dict(request.headers)))),
             'role': role,
         }
 
@@ -1069,7 +1078,7 @@ class Client(object):
         ret = {}
         for k, v in headers.items():
             if isinstance(v, bytes):
-                ret[k] = [str(v, 'ascii')]
+                ret[k] = [str(v, 'ascii') if sys.version_info[0] >= 3 else str(v)]
             else:
                 ret[k] = [v]
         return ret
