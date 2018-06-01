@@ -988,7 +988,7 @@ class Client(object):
 
         return self.auth('/v1/auth/{0}/login'.format(mount_point), json=params, use_token=use_token)
 
-    def auth_iam2(self, iam_role, use_token=True):
+    def auth_iam(self, iam_role, use_token=True):
         """
         Authenticate to Vault per https://www.vaultproject.io/docs/auth/aws.htm.
 
@@ -1000,20 +1000,6 @@ class Client(object):
         params = self._generate_vault_request(iam_role, parsed.hostname)
 
         return self.auth('/v1/auth/aws/login', json=params, use_token=use_token)
-
-    def auth_iam(self, iam_role):
-        """
-        Authenticate to Vault per https://www.vaultproject.io/docs/auth/aws.htm.
-
-        :param iam_role: IAM role
-        :return:
-        """
-        parsed = urlparse(self._url)
-        self.token = self._authenticate_to_vault(parsed.hostname,
-                                                 parsed.port,
-                                                 iam_role,
-                                                 self._kwargs['verify'])
-        return self.token
 
     def _authenticate_to_vault(self, vault_host, vault_port, role, verify):
         payload = self._generate_vault_request(role, vault_host)
